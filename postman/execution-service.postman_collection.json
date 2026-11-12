@@ -1,0 +1,114 @@
+{
+  "info": {
+    "name": "Execution Service",
+    "description": "Workshop floor execution queue API (Phase 4)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8083"
+    },
+    {
+      "key": "execucaoId",
+      "value": ""
+    },
+    {
+      "key": "ordemServicoId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/actuator/health"
+      }
+    },
+    {
+      "name": "Prometheus",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/actuator/prometheus"
+      }
+    },
+    {
+      "name": "List queue",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/execucoes/fila"
+      }
+    },
+    {
+      "name": "Get by id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/execucoes/{{execucaoId}}"
+      }
+    },
+    {
+      "name": "Get by service order",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/execucoes/por-ordem/{{ordemServicoId}}"
+      }
+    },
+    {
+      "name": "Start diagnosis",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"notas\": \"Ruido no motor\"\n}"
+        },
+        "url": "{{baseUrl}}/api/execucoes/{{execucaoId}}/iniciar-diagnostico"
+      }
+    },
+    {
+      "name": "Start repair",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"notas\": \"Troca de correia\"\n}"
+        },
+        "url": "{{baseUrl}}/api/execucoes/{{execucaoId}}/iniciar-reparo"
+      }
+    },
+    {
+      "name": "Finish execution",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"notas\": \"Servico concluido\"\n}"
+        },
+        "url": "{{baseUrl}}/api/execucoes/{{execucaoId}}/finalizar"
+      }
+    }
+  ]
+}

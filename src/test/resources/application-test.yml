@@ -1,0 +1,34 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:execution_test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+  rabbitmq:
+    listener:
+      simple:
+        auto-startup: false
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.amqp.autoconfigure.RabbitAutoConfiguration
+
+server:
+  port: 0
+
+oficina:
+  messaging:
+    exchange: oficina.events
+    queues:
+      execucao-iniciar: execution.execucao.iniciar
+      compensar-execucao: execution.compensar.execucao
+    routing-keys:
+      execucao-iniciar: execucao.iniciar
+      compensar-execucao: compensar.execucao
+      execucao-iniciada: execucao.iniciada
+      execucao-finalizada: execucao.finalizada

@@ -1,0 +1,97 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ main, homolog ]
+  pull_request:
+    branches: [ main, homolog ]
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Build and run tests with JaCoCo
+        run: mvn -B verify
+
+      - name: Upload JaCoCo coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: target/site/jacoco
+
+  docker-image:
+    name: Build Docker image
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: execution-service:latest
+          outputs: type=docker,dest=/tmp/execution-service.tar
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: execution-service-image
+          path: /tmp/execution-service.tar
+
+  deploy-k8s:
+    name: Deploy Kubernetes manifests
+    needs: docker-image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download image artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: execution-service-image
+          path: /tmp
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: execution-cluster
+
+      - name: Load image into kind
+        run: |
+          docker load --input /tmp/execution-service.tar
+          kind load docker-image execution-service:latest --name execution-cluster
+
+      - name: Apply Kubernetes manifests
+        run: |
+          kubectl apply -f k8s/00-namespace.yaml
+          kubectl apply -f k8s/01-configmap.yaml
+          kubectl apply -f k8s/02-secret.yaml
+          kubectl apply -f k8s/03-postgres.yaml
+          kubectl apply -f k8s/04-app.yaml
+          kubectl apply -f k8s/05-hpa.yaml
+
+      - name: Wait for PostgreSQL rollout
+        run: kubectl -n oficina rollout status deployment/execution-postgres --timeout=180s
+
+      - name: Show deployment state
+        if: always()
+        run: kubectl -n oficina get all

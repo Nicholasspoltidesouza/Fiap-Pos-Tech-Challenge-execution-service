@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: execution-postgres
+  namespace: oficina
+  labels:
+    app: execution-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: execution-postgres
+  template:
+    metadata:
+      labels:
+        app: execution-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: execution_db
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: execution-service-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: execution-service-secret
+                  key: POSTGRES_PASSWORD
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: execution-postgres
+  namespace: oficina
+  labels:
+    app: execution-postgres
+spec:
+  selector:
+    app: execution-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+  type: ClusterIP
