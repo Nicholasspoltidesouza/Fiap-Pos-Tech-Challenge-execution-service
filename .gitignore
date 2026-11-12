@@ -50,3 +50,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# temporarily ignored until workflow scope is granted
+.github/workflows/ci-cd.yml
